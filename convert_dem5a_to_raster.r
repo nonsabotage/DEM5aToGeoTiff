@@ -33,22 +33,17 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
         html_nodes(xpath="//coverage//rangeset//datablock//tuplelist") %>%
         html_text %>%
         read_csv(col_names=c("type", "val"), col_types="cd")
-    gridenvelope_low <-
+    gridenvelope <-
     	coverage %>%
-    	html_nodes(xpath="//gridenvelope//low") %>%
+    	html_nodes(xpath="//gridenvelope") %>%
+    	html_children() %>%
     	html_text() %>%
-    	str_split(" ", simplify = TRUE, n = 2) %>%
-    	parse_integer() %>%
-    	set_names(c("x", "y"))
-    gridenvelope_high <-
-    	coverage %>%
-    	html_nodes(xpath="//gridenvelope//high") %>%
-    	html_text() %>%
-    	str_split(" ", simplify = TRUE, n = 2) %>%
-    	parse_integer() %>%
-    	set_names(c("x", "y"))
-    mesh_size_x <- length(gridenvelope_low["x"]:gridenvelope_high["x"])
-    mesh_size_y <- length(gridenvelope_low["y"]:gridenvelope_high["y"])
+    	str_split() %>%
+    	lapply(parse_integer) %>%
+    	set_names(c("low", "high")) %>%
+    	lapply(set_names, c("x", "y"))
+    mesh_size_x <- length(gridenvelope$low["x"]:gridenvelope$high["x"])
+    mesh_size_y <- length(gridenvelope$low["y"]:gridenvelope$high["y"])
 
 
     # 値は北西方向と南東方向に省略されている可能性があるので
