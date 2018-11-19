@@ -1,8 +1,6 @@
 TARGET_DIR: "./FG-GML-5638-04-DEM5A/"
 OUTPUT_DIR: "./out"
 RASTER_PARAMETER:
-  MESH_SIZE_X: 225
-  MESH_SIZE_Y: 150
   CRS: "+init=epsg:4612 +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs"
   NA_VALUE: -9999
 
