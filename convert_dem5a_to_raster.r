@@ -34,14 +34,14 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
         html_text %>%
         read_csv(col_names=c("type", "val"), col_types="cd")
     gridenvelope_low <-
-    	gridenvelope %>%
+    	coverage %>%
     	html_nodes(xpath="//gridenvelope//low") %>%
     	html_text() %>%
     	str_split(" ", simplify = TRUE, n = 2) %>%
     	parse_integer() %>%
     	set_names(c("x", "y"))
     gridenvelope_high <-
-    	gridenvelope %>%
+    	coverage %>%
     	html_nodes(xpath="//gridenvelope//high") %>%
     	html_text() %>%
     	str_split(" ", simplify = TRUE, n = 2) %>%
