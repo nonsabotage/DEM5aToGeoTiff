@@ -14,12 +14,12 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
     boundedby <-
         coverage %>%
         html_nodes(xpath="//coverage//boundedby//envelope") %>%
-        html_children %>%
-        html_text %>%
+        html_children() %>%
+        html_text() %>%
         str_split(" ") %>%
         lapply(type.convert) %>%
-        "names<-"(c("lower", "upper")) %>%
-        lapply(setNames, c ("y", "x"))
+        set_names(c("lower", "upper")) %>%
+        lapply(set_names, c ("y", "x"))
     sp <-
         coverage %>%
         html_nodes(xpath="//coverage//coveragefunction//gridfunction//startpoint") %>%
