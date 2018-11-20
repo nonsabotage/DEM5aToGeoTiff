@@ -38,7 +38,7 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
     	html_nodes(xpath="//gridenvelope") %>%
     	html_children() %>%
     	html_text() %>%
-    	str_split() %>%
+    	str_split(" ") %>%
     	lapply(parse_integer) %>%
     	set_names(c("low", "high")) %>%
     	lapply(set_names, c("x", "y"))
@@ -49,11 +49,11 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
     # 値は北西方向と南東方向に省略されている可能性があるので
     # データサイズの調整が必要となる
     # ex) 海岸線, 河川, 未計測エリア
+    # 北西方向と南東方向のデータ省略ではなく
+    # その間の欠測値については-9999.が記録されているので省略部分と合わせてNAに変換
     vals <- tuplelist$val
     vals <- c (rep (na_value, length=sp["x"] + sp["y"] * mesh_size_x), vals)
     vals <- c (vals, rep (na_value, length=mesh_size_x * mesh_size_y - length(vals)))
-    # 北西方向と南東方向のデータ省略ではなく
-    # その間の欠測値については-9999.が記録されているので省略部分と合わせてNAに変換
     vals[(vals - na_value) < 1.] <- NA
     # ラスターオブジェクトの作成
     rst  <- raster(xmn=boundedby$lower["x"],
