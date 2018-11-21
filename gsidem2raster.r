@@ -7,7 +7,7 @@ for (lib in libs[!sapply(libs, require, character.only=TRUE)]) {
     install.packages(lib, repos="https://cran.ism.ac.jp/", depend=TRUE)
     library (lib)
 }
-convert_dem5a_to_raster <- function (ipath, crs, na_value) {
+gsidem2raster <- function (ipath, crs, na_value) {
     coverage  <-
         read_html(ipath, encoding="cp932") %>%
         html_nodes(xpath="//dem//coverage")
@@ -23,15 +23,15 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
     sp <-
         coverage %>%
         html_nodes(xpath="//coverage//coveragefunction//gridfunction//startpoint") %>%
-        html_text %>%
+        html_text() %>%
         str_split(" ") %>%
         lapply(type.convert) %>%
         lapply(setNames, c ("x", "y")) %>%
-        unlist
+        unlist()
     tuplelist <-
         coverage %>%
         html_nodes(xpath="//coverage//rangeset//datablock//tuplelist") %>%
-        html_text %>%
+        html_text() %>%
         read_csv(col_names=c("type", "val"), col_types="cd")
     gridenvelope <-
     	coverage %>%
@@ -46,24 +46,40 @@ convert_dem5a_to_raster <- function (ipath, crs, na_value) {
     mesh_size_y <- length(gridenvelope$low["y"]:gridenvelope$high["y"])
 
 
-    # 値は北西方向と南東方向に省略されている可能性があるので
-    # データサイズの調整が必要となる
-    # ex) 海岸線, 河川, 未計測エリア
-    # 北西方向と南東方向のデータ省略ではなく
-    # その間の欠測値については-9999.が記録されているので省略部分と合わせてNAに変換
+    # ----------------------------------------------------------------
+    # 値の省略と欠測値への対応
+    # ----------------------------------------------------------------
+    # 値の省略：
+    #   値は北西方向と南東方向に省略されている可能性があるのでデータサイズの調整が必要
+    #   ex) 海岸線, 河川, 未計測エリア
+    # 欠測値：
+    #   欠測値については-9999.が記録されている.
+    #   省略部分と合わせてNAに変換する.
+    #   -9999のままだとラスターオブジェクトの値域が-9999から始まってしまい濃淡が出ない.
     vals <- tuplelist$val
-    vals <- c (rep (na_value, length=sp["x"] + sp["y"] * mesh_size_x), vals)
-    vals <- c (vals, rep (na_value, length=mesh_size_x * mesh_size_y - length(vals)))
+    # 北西の省略に対する処理
+    vals <- append(
+        x = vals,
+        values = rep(x = na_value, length = sp["x"] + sp["y"] * mesh_size_x),
+        after = 0)
+    # 東南の省略に対する処理
+    vals <- append(
+        x = vals,
+        values = rep(x = na_value, length = mesh_size_x * mesh_size_y - length(vals)))
+    # 欠測値に対する処理
     vals[(vals - na_value) < 1.] <- NA
-    # ラスターオブジェクトの作成
-    rst  <- raster(xmn=boundedby$lower["x"],
-                   xmx=boundedby$upper["x"],
-                   ymn=boundedby$lower["y"],
-                   ymx=boundedby$upper["y"],
-                   nrows=mesh_size_y,
-                   ncols=mesh_size_x,
-                   crs=crs,
-                   vals=vals)
+
+    # ----------------------------------------------------------------
+    # ラスターオブジェクト
+    # ----------------------------------------------------------------
+    rst  <- raster(xmn = boundedby$lower["x"],
+                   xmx = boundedby$upper["x"],
+                   ymn = boundedby$lower["y"],
+                   ymx = boundedby$upper["y"],
+                   nrows = mesh_size_y,
+                   ncols = mesh_size_x,
+                   crs = crs,
+                   vals = vals)
     rst
 }
 writeRasterGrd <- function (r, opath, p) {
@@ -77,7 +93,7 @@ writeRasterGrd <- function (r, opath, p) {
     cat (sprintf ("yllcorner %s\n",    extent(r)@ymin),  file=con)
     cat (sprintf ("cellsize %s\n",     res(r)[1]),       file=con)
     cat (sprintf ("NODATA_value %s\n", p$NA_VALUE),      file=con)
-    for(e in 1:nrow(vmat)) cat(vmat[e,,drop=TRUE], "\n", file=con)
+    for(e in 1:nr) cat(vmat[e,,drop=TRUE], "\n", file=con)
     close (con)
 }
 grd2tif <- function (i, o) {
