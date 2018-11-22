@@ -70,7 +70,7 @@ gsidem2raster <- function (ipath, crs, na_value) {
     vals[(vals - na_value) < 1.] <- NA
 
     # ----------------------------------------------------------------
-    # ラスターオブジェクト
+    # ラスター
     # ----------------------------------------------------------------
     rst  <- raster(xmn = boundedby$lower["x"],
                    xmx = boundedby$upper["x"],
