@@ -56,18 +56,23 @@ gsidem2raster <- function (ipath, crs, na_value) {
     #   欠測値については-9999.が記録されている.
     #   省略部分と合わせてNAに変換する.
     #   -9999のままだとラスターオブジェクトの値域が-9999から始まってしまい濃淡が出ない.
-    vals <- tuplelist$val
-    # 北西の省略に対する処理
-    vals <- append(
-        x = vals,
-        values = rep(x = na_value, length = sp["x"] + sp["y"] * mesh_size_x),
-        after = 0)
-    # 東南の省略に対する処理
-    vals <- append(
-        x = vals,
-        values = rep(x = na_value, length = mesh_size_x * mesh_size_y - length(vals)))
-    # 欠測値に対する処理
-    vals[(vals - na_value) < 1.] <- NA
+    vals <-
+        tuplelist$val %>%
+        # 北西の省略に対する処理
+        append(
+            values = rep(
+                x = na_value,
+                length = sp["x"] + sp["y"] * mesh_size_x),
+            after = 0) %>%
+        # 東南の省略に対する処理
+        append(
+            values = rep(
+                x = na_value,
+                length = mesh_size_x * mesh_size_y - length(.))) %>%
+        # 中間の欠測値に対する処理
+        replace(
+            abs(. - na_value) < 1.,
+            NA)
 
     # ----------------------------------------------------------------
     # ラスター
