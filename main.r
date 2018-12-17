@@ -5,7 +5,8 @@ target_dir <- purrr::pluck(config, "TARGET_DIR")
 output_dir <- purrr::pluck(config, "OUTPUT_DIR")
 parameters <- purrr::pluck(config, "RASTER_PARAMETER")
 ipaths <-
-    list.files(target_dir, full.names=TRUE, pattern="xml$") %>%
+	target_dir %>%
+    list.files(full.names=TRUE, pattern="xml$") %>%
     keep( ~ str_detect(.x, "DEM5A"))
 
 for (ipath in ipaths) {

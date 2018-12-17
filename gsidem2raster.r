@@ -42,8 +42,8 @@ gsidem2raster <- function (ipath, crs, na_value) {
     	lapply(parse_integer) %>%
     	set_names(c("low", "high")) %>%
     	lapply(set_names, c("x", "y"))
-    mesh_size_x <- length(gridenvelope$low["x"]:gridenvelope$high["x"])
-    mesh_size_y <- length(gridenvelope$low["y"]:gridenvelope$high["y"])
+    grid_size_x <- length(gridenvelope$low["x"]:gridenvelope$high["x"])
+    grid_size_y <- length(gridenvelope$low["y"]:gridenvelope$high["y"])
 
 
     # ----------------------------------------------------------------
@@ -62,17 +62,20 @@ gsidem2raster <- function (ipath, crs, na_value) {
         append(
             values = rep(
                 x = na_value,
-                length = sp["x"] + sp["y"] * mesh_size_x),
-            after = 0) %>%
+                length = sp["x"] + sp["y"] * grid_size_x),
+            after = 0
+        ) %>%
         # 東南の省略に対する処理
         append(
             values = rep(
                 x = na_value,
-                length = mesh_size_x * mesh_size_y - length(.))) %>%
+                length = grid_size_x * grid_size_y - length(.))
+        ) %>%
         # 中間の欠測値に対する処理
         replace(
             abs(. - na_value) < 1.,
-            NA)
+            NA
+        )
 
     # ----------------------------------------------------------------
     # ラスター
@@ -81,8 +84,8 @@ gsidem2raster <- function (ipath, crs, na_value) {
                    xmx = boundedby$upper["x"],
                    ymn = boundedby$lower["y"],
                    ymx = boundedby$upper["y"],
-                   nrows = mesh_size_y,
-                   ncols = mesh_size_x,
+                   nrows = grid_size_y,
+                   ncols = grid_size_x,
                    crs = crs,
                    vals = vals)
     rst
