@@ -9,7 +9,7 @@ for (lib in libs[!sapply(libs, require, character.only=TRUE)]) {
 }
 gsidem2raster <- function (ipath, crs, na_value) {
     coverage  <-
-        read_html(ipath, encoding="cp932") %>%
+        read_html(ipath, encoding="UTF-8") %>%
         html_nodes(xpath="//dem//coverage")
     boundedby <-
         coverage %>%
