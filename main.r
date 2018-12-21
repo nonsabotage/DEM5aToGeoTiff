@@ -1,4 +1,6 @@
-source("./gsidem2raster.r", encoding = "UTF-8")
+source("./gsidem2raster_dev.r", encoding = "UTF-8")
+source("./util.r", encoding = "UTF-8")
+
 
 config <- read_yaml("config.yaml")
 target_dir <- purrr::pluck(config, "TARGET_DIR")

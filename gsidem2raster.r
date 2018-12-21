@@ -2,42 +2,43 @@
 # 基盤地図情報5mメッシュをGeoTiff形式に変換する
 # Rでgrdファイルに書き出した後に, gdal_translateでgeotiffファイルに変換
 # + --------------------------------------------------------------------------- +
-libs <- c ("rvest", "rgdal", "raster", "dplyr", "tidyr", "readr", "purrr", "stringr", "yaml")
+libs <- c ("xml2", "rgdal", "raster", "dplyr", "tidyr", "readr", "purrr", "stringr", "yaml")
 for (lib in libs[!sapply(libs, require, character.only=TRUE)]) {
     install.packages(lib, repos="https://cran.ism.ac.jp/", depend=TRUE)
     library (lib)
 }
 gsidem2raster <- function (ipath, crs, na_value) {
-    coverage  <-
-        read_html(ipath, encoding="UTF-8") %>%
-        html_nodes(xpath="//dem//coverage")
+    coverage <-
+        ipath %>%
+        read_xml() %>%
+        xml_find_all("/d1:Dataset/d1:DEM/d1:coverage")
     boundedby <-
         coverage %>%
-        html_nodes(xpath="//coverage//boundedby//envelope") %>%
-        html_children() %>%
-        html_text() %>%
+        xml_find_all("./gml:boundedBy/gml:Envelope") %>%
+        xml_children() %>%
+        xml_text() %>%
         str_split(" ") %>%
         lapply(type.convert) %>%
         set_names(c("lower", "upper")) %>%
         lapply(set_names, c ("y", "x"))
     sp <-
         coverage %>%
-        html_nodes(xpath="//coverage//coveragefunction//gridfunction//startpoint") %>%
-        html_text() %>%
+        xml_find_all("./gml:coverageFunction/gml:GridFunction/gml:startPoint") %>%
+        xml_text() %>%
         str_split(" ") %>%
         lapply(type.convert) %>%
         lapply(setNames, c ("x", "y")) %>%
         unlist()
     tuplelist <-
         coverage %>%
-        html_nodes(xpath="//coverage//rangeset//datablock//tuplelist") %>%
-        html_text() %>%
+        xml_find_all("./gml:rangeSet/gml:DataBlock/gml:tupleList") %>%
+        xml_text() %>%
         read_csv(col_names=c("type", "val"), col_types="cd")
     gridenvelope <-
     	coverage %>%
-    	html_nodes(xpath="//gridenvelope") %>%
-    	html_children() %>%
-    	html_text() %>%
+        xml_find_all("./gml:gridDomain/gml:Grid/gml:limits/gml:GridEnvelope") %>%
+    	xml_children() %>%
+    	xml_text() %>%
     	str_split(" ") %>%
     	lapply(parse_integer) %>%
     	set_names(c("low", "high")) %>%
@@ -71,7 +72,7 @@ gsidem2raster <- function (ipath, crs, na_value) {
                 x = na_value,
                 length = grid_size_x * grid_size_y - length(.))
         ) %>%
-        # 中間の欠測値に対する処理
+        # 欠測値の変換
         replace(
             abs(. - na_value) < 1.,
             NA
@@ -89,22 +90,4 @@ gsidem2raster <- function (ipath, crs, na_value) {
                    crs = crs,
                    vals = vals)
     rst
-}
-writeRasterGrd <- function (r, opath, p) {
-	nr <- dim(r)[1]
-	nc <- dim(r)[2]
-    vmat <- matrix(values(r), nrow=nr, ncol=nc, byrow=TRUE)
-    con  <- file(opath, open="wb")
-    cat (sprintf ("ncols %s\n",        nc),      file=con)
-    cat (sprintf ("nrows %s\n",        nr),      file=con)
-    cat (sprintf ("xllcorner %s\n",    extent(r)@xmin),  file=con)
-    cat (sprintf ("yllcorner %s\n",    extent(r)@ymin),  file=con)
-    cat (sprintf ("cellsize %s\n",     res(r)[1]),       file=con)
-    cat (sprintf ("NODATA_value %s\n", p$NA_VALUE),      file=con)
-    for(e in 1:nr) cat(vmat[e,,drop=TRUE], "\n", file=con)
-    close (con)
-}
-grd2tif <- function (i, o) {
-    cmd <- sprintf("gdal_translate -a_srs EPSG:4612 %s %s", i, o)
-    system(cmd)
 }
