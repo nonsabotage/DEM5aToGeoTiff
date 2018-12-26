@@ -46,41 +46,10 @@ gsidem2raster <- function (ipath, crs, na_value) {
     grid_size_x <- length(gridenvelope$low["x"]:gridenvelope$high["x"])
     grid_size_y <- length(gridenvelope$low["y"]:gridenvelope$high["y"])
 
+    vals <- numeric(grid_size_x * grid_size_y) + na_value
+    vals[sp["x"] + sp["y"] * grid_size_x + seq_along(tuplelist$val)] <- tuplelist$val
+    vals[abs(vals - na_value) <= .Machine$double.eps]  <- NA
 
-    # ----------------------------------------------------------------
-    # 値の省略と欠測値への対応
-    # ----------------------------------------------------------------
-    # 値の省略：
-    #   値は北西方向と南東方向に省略されている可能性があるのでデータサイズの調整が必要
-    #   ex) 海岸線, 河川, 未計測エリア
-    # 欠測値：
-    #   欠測値については-9999.が記録されている.
-    #   省略部分と合わせてNAに変換する.
-    #   -9999のままだとラスターオブジェクトの値域が-9999から始まってしまい濃淡が出ない.
-    vals <-
-        tuplelist$val %>%
-        # 北西の省略に対する処理
-        append(
-            values = rep(
-                x = na_value,
-                length = sp["x"] + sp["y"] * grid_size_x),
-            after = 0
-        ) %>%
-        # 東南の省略に対する処理
-        append(
-            values = rep(
-                x = na_value,
-                length = grid_size_x * grid_size_y - length(.))
-        ) %>%
-        # 欠測値の変換
-        replace(
-            abs(. - na_value) < 1.,
-            NA
-        )
-
-    # ----------------------------------------------------------------
-    # ラスター
-    # ----------------------------------------------------------------
     rst  <- raster(xmn = boundedby$lower["x"],
                    xmx = boundedby$upper["x"],
                    ymn = boundedby$lower["y"],
