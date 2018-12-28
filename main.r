@@ -18,3 +18,21 @@ for (ipath in ipaths) {
     writeRasterGrd(rst, opath, parameters)
 }
 
+
+
+library(fs)
+d5a <- dir_ls("FG-GML-5638-04-DEM5A/", glob = "*.xml$")
+d5b <- dir_ls("FG-GML-5338-35-DEM5B/", glob = "*.xml$")
+d10a <- dir_ls("FG-GML-4931-20-DEM10A/", glob = "*.xml$")
+d10b <- dir_ls("FG-GML-5338-56-DEM10B/", glob = "*.xml$")
+
+
+layout(matrix(c(1:4), nrow=2, byrow =TRUE))
+plot(gsidem2raster(d5a[1], crs = parameters$CRS, na_value = parameters$NA_VALUE))
+plot(gsidem2raster(d5b[1], crs = parameters$CRS, na_value = parameters$NA_VALUE))
+plot(gsidem2raster(d10a[1], crs = parameters$CRS, na_value = parameters$NA_VALUE))
+plot(gsidem2raster(d10b[1], crs = parameters$CRS, na_value = parameters$NA_VALUE))
+
+
+
+

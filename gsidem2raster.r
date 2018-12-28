@@ -10,7 +10,7 @@ for (lib in libs[!sapply(libs, require, character.only=TRUE)]) {
 gsidem2raster <- function (ipath, crs, na_value) {
     coverage <-
         ipath %>%
-        read_xml() %>%
+        read_xml(options = c("NOBLANKS", "HUGE")) %>%
         xml_find_all("/d1:Dataset/d1:DEM/d1:coverage")
     boundedby <-
         coverage %>%
